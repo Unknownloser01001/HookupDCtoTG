@@ -50,7 +50,9 @@ async def on_message(message):
 
 # Run the web server in the background, then start the Discord Bot
 if __name__ == "__main__":
+    # Create a background thread for the web server
     t = threading.Thread(target=run_web_server)
     t.start()
+    
+    # Start your Discord Bot
     client.run(DISCORD_TOKEN)
-
