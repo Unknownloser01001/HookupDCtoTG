@@ -38,16 +38,41 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    if message.author.bot: return
+    if message.author.bot and message.author.id == client.user.id: 
+        return  # Ignore itself, but allow OTHER bots' embeds if needed
+
     if message.channel.id == DISCORD_CHANNEL_ID:
-        telegram_text = f"**{message.author.name}**:\n{message.content}"
+        telegram_text = f"**{message.author.name}**:\n"
+        
+        # 1. Grab normal text message if it exists
+        if message.content:
+            telegram_text += f"{message.content}\n"
+
+        # 2. READ DISCORD EMBEDS AND TRANSLATE TO TEXT
+        if message.embeds:
+            for embed in message.embeds:
+                embed_pieces = []
+                if embed.title:
+                    embed_pieces.append(f"**🔹 {embed.title}**")
+                if embed.description:
+                    embed_pieces.append(embed.description)
+                
+                # Grab fields inside the embed if there are any
+                for field in embed.fields:
+                    embed_pieces.append(f"**{field.name}**: {field.value}")
+                
+                if embed_pieces:
+                    telegram_text += "\n" + "\n".join(embed_pieces) + "\n"
+
+        # 3. Grab attachments (images/files)
         if message.attachments:
             for file in message.attachments:
                 telegram_text += f"\n📎 Attachment: {file.url}"
 
+        # Send everything to Telegram
         telegram_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-        requests.post(telegram_url, json={"chat_id": TELEGRAM_CHAT_ID, "text": telegram_text, "parse_mode": "Markdown"})
-
+        requests.post(telegram_url, json={"chat_id": TELEGRAM_CHAT_ID, "text": telegram_text.strip(), "parse_mode": "Markdown"})
+        
 # Run the web server in the background, then start the Discord Bot
 if __name__ == "__main__":
     import threading
