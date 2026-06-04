@@ -22,7 +22,7 @@ def run_web_server():
 DISCORD_TOKEN = os.environ.get('DISCORD_TOKEN')
 TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID')
-DISCORD_CHANNEL_ID = 112233445566778899  # <-- Keep your actual ID here
+DISCORD_CHANNEL_ID = 1511914407142100994  # <-- Keep your actual ID here
 
 if not all([DISCORD_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]):
     print("Missing environment variables!")
