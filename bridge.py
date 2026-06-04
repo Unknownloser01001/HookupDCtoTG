@@ -50,9 +50,14 @@ async def on_message(message):
 
 # Run the web server in the background, then start the Discord Bot
 if __name__ == "__main__":
-    # Create a background thread for the web server
+    import threading
+    
+    # 1. Spin up the web server inside a background thread
     t = threading.Thread(target=run_web_server)
+    t.daemon = True  # This forces the thread to close safely if the bot crashes
     t.start()
     
-    # Start your Discord Bot
+    print("Web server started in background thread. Launching Discord client...")
+    
+    # 2. Run the Discord bot on the main thread
     client.run(DISCORD_TOKEN)
