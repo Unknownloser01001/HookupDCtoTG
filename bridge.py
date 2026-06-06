@@ -130,6 +130,11 @@ async def telegram_polling():
 
 if __name__ == "__main__":
     threading.Thread(target=run_web_server, daemon=True).start()
-    
-    # Fixed event loop handling
-    asyncio.run(client.run(DISCORD_TOKEN))
+
+    async def runner():
+        await asyncio.gather(
+            client.start(DISCORD_TOKEN),
+            telegram_polling()
+        )
+
+    asyncio.run(runner())
