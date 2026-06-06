@@ -99,8 +99,9 @@ async def telegram_polling():
     while True:
         try:
             resp = requests.get(
-                f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/getUpdates",
-                params={"offset": offset, "timeout": 30}
+             f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/getUpdates",
+                params={"offset": offset, "timeout": 5},
+                timeout=6
             )
             data = resp.json()
             if data.get("ok"):
