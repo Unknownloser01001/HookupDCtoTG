@@ -6,16 +6,15 @@ import discord
 import requests
 from flask import Flask
 
-# ====================== FLASK KEEP-ALIVE ======================
 app = Flask('')
 
 @app.route('/')
 def home():
-    return "HookupDCtoTG Bridge is running!"
+    return "Bridge is running!"
 
 def run_web_server():
     port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port, use_reloader=False)
 
 # ====================== CONFIG ======================
 DISCORD_TOKEN = os.environ.get('DISCORD_TOKEN')
@@ -26,10 +25,9 @@ TARGET_SERVER_ID = int(os.environ.get('TARGET_SERVER_ID', 0))
 HIGH_ROLE_ID = int(os.environ.get('HIGH_ROLE_ID', 0))
 
 if not all([DISCORD_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]):
-    print("❌ Missing required environment variables!")
+    print("Missing env variables!")
     sys.exit(1)
 
-# ====================== DISCORD ======================
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
@@ -39,7 +37,7 @@ client = discord.Client(intents=intents)
 
 @client.event
 async def on_ready():
-    print(f"✅ Discord Bot online as {client.user}")
+    print(f"✅ Bot online as {client.user}")
 
 # Forwarding + Discord Commands
 @client.event
@@ -47,7 +45,6 @@ async def on_message(message: discord.Message):
     if message.author.bot:
         return
 
-    # Forwarding
     if message.channel.id == DISCORD_CHANNEL_ID:
         text = f"**{message.author}**:\n{message.content or ''}"
         if message.embeds:
@@ -66,7 +63,6 @@ async def on_message(message: discord.Message):
         except:
             pass
 
-    # Discord Invite Command
     if message.content.lower() in ["!invite", "!join", "/invite"]:
         await send_invite(message.author, message.channel)
 
@@ -76,9 +72,7 @@ async def send_invite(user, channel=None):
         return
     try:
         guild = client.get_guild(TARGET_SERVER_ID)
-        invite = await guild.text_channels[0].create_invite(
-            max_age=0, max_uses=1, unique=True
-        )
+        invite = await guild.text_channels[0].create_invite(max_age=0, max_uses=1, unique=True)
         msg = f"✅ **Your Invite**\n{invite.url}\n\n→ Auto high role on join!"
         await user.send(msg)
         if channel:
@@ -88,7 +82,6 @@ async def send_invite(user, channel=None):
         if channel:
             await channel.send("❌ Failed to create invite.")
 
-# Auto Role
 @client.event
 async def on_member_join(member: discord.Member):
     if member.guild.id == TARGET_SERVER_ID and HIGH_ROLE_ID:
@@ -100,7 +93,7 @@ async def on_member_join(member: discord.Member):
         except Exception as e:
             print(f"Role error: {e}")
 
-# ====================== TELEGRAM ======================
+# Telegram Polling
 async def telegram_polling():
     offset = 0
     while True:
@@ -120,9 +113,7 @@ async def telegram_polling():
                         if text in ["/invite", "!invite", "!join"]:
                             try:
                                 guild = client.get_guild(TARGET_SERVER_ID)
-                                invite = await guild.text_channels[0].create_invite(
-                                    max_age=0, max_uses=1, unique=True
-                                )
+                                invite = await guild.text_channels[0].create_invite(max_age=0, max_uses=1, unique=True)
                                 response = f"✅ **Discord Invite**\n{invite.url}\n\n→ Auto high role!"
                                 requests.post(
                                     f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
@@ -137,9 +128,8 @@ async def telegram_polling():
             print(f"Telegram error: {e}")
         await asyncio.sleep(1)
 
-# ====================== START ======================
 if __name__ == "__main__":
     threading.Thread(target=run_web_server, daemon=True).start()
-    loop = asyncio.get_event_loop()
-    loop.create_task(telegram_polling())
-    client.run(DISCORD_TOKEN)
+    
+    # Fixed event loop handling
+    asyncio.run(client.run(DISCORD_TOKEN))
